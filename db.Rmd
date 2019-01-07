@@ -1,0 +1,527 @@
+---
+title: "NFL Data Bowl"
+author: "Konner Macias"
+date: "December 26, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read the data
+```{r}
+library(tidyverse)
+file.tracking <- "https://raw.githubusercontent.com/nfl-football-ops/Big-Data-Bowl/master/Data/tracking_gameId_2017090700.csv"
+tracking.example <- read_csv(file.tracking)
+
+file.game <- "https://raw.githubusercontent.com/nfl-football-ops/Big-Data-Bowl/master/Data/games.csv"
+games.sum <- read_csv(file.game) 
+
+file.plays <- "https://raw.githubusercontent.com/nfl-football-ops/Big-Data-Bowl/master/Data/plays.csv"
+plays.sum <- read_csv(file.plays) 
+
+tracking.example.merged <- tracking.example %>% inner_join(games.sum) %>% inner_join(plays.sum) 
+
+example.play <- tracking.example.merged %>% filter(playId == 2756)
+
+example.play %>% select(playDescription) %>% slice(1)
+```
+
+# Animate data
+```{r}
+library(gganimate)
+library(cowplot)
+
+## General field boundaries
+xmin <- 0
+xmax <- 160/3
+hash.right <- 38.35
+hash.left <- 12
+hash.width <- 3.3
+
+
+## Specific boundaries for a given play
+ymin <- max(round(min(example.play$x, na.rm = TRUE) - 10, -1), 0)
+ymax <- min(round(max(example.play$x, na.rm = TRUE) + 10, -1), 120)
+df.hash <- expand.grid(x = c(0, 23.36667, 29.96667, xmax), y = (10:110))
+df.hash <- df.hash %>% filter(!(floor(y %% 5) == 0))
+df.hash <- df.hash %>% filter(y < ymax, y > ymin)
+```
+
+Animation Function
+```{r}
+animate.play <- function(play) {
+  ggplot() +
+  geom_point(data = play, aes(x = (xmax-y), y = x, 
+                                 colour = team, group = nflId, pch = team, size = team)) + 
+  geom_text(data = play, aes(x = (xmax-y), y = x, label = jerseyNumber), colour = "white", 
+            vjust = 0.36, size = 3.5) + 
+  scale_size_manual(values = c(6, 4, 6), guide = FALSE) + 
+  scale_shape_manual(values = c(19, 16, 19), guide = FALSE) +
+  scale_colour_manual(values = c("#e31837", "#654321", "#002244"), guide = FALSE) + 
+  annotate("text", x = df.hash$x[df.hash$x < 55/2], 
+           y = df.hash$y[df.hash$x < 55/2], label = "_", hjust = 0, vjust = -0.2) + 
+  annotate("text", x = df.hash$x[df.hash$x > 55/2], 
+           y = df.hash$y[df.hash$x > 55/2], label = "_", hjust = 1, vjust = -0.2) + 
+  annotate("segment", x = xmin, 
+           y = seq(max(10, ymin), min(ymax, 110), by = 5), 
+           xend =  xmax, 
+           yend = seq(max(10, ymin), min(ymax, 110), by = 5)) + 
+  annotate("text", x = rep(hash.left, 11), y = seq(10, 110, by = 10), 
+                    label = c("G   ", seq(10, 50, by = 10), rev(seq(10, 40, by = 10)), "   G"), 
+                    angle = 270, size = 4) + 
+  annotate("text", x = rep((xmax - hash.left), 11), y = seq(10, 110, by = 10), 
+           label = c("   G", seq(10, 50, by = 10), rev(seq(10, 40, by = 10)), "G   "), 
+           angle = 90, size = 4) + 
+  annotate("segment", x = c(xmin, xmin, xmax, xmax), 
+           y = c(ymin, ymax, ymax, ymin), 
+           xend = c(xmin, xmax, xmax, xmin), 
+           yend = c(ymax, ymax, ymin, ymin), colour = "black") + 
+  ylim(ymin, ymax) + 
+  coord_fixed() +  
+  theme_nothing() + 
+  transition_time(frame.id)  +
+  ease_aes('linear') + 
+  NULL
+}
+```
+
+Now animate
+```{r}
+play.length.ex <- length(unique(example.play$frame.id))
+animate(animate.play(example.play), fps = 10, nframe = play.length.ex)
+```
+
+```{r}
+simPlay <- function(df, play.id) {
+  play <- df %>% filter(playId == play.id)
+  play.length <- length(unique(play$frame.id))
+  animate(animate.play(play), fps = 10, nframe = play.length)
+}
+```
+
+
+
+```{r}
+touchdown.plays <- tracking.example.merged %>% filter(grepl("TOUCHDOWN",playDescription))
+touchdown.ids <- unique(touchdown.plays$playId)
+```
+
+
+
+
+
+```{r}
+play <- tracking.example.merged %>% filter(playId == touchdown.ids[5])
+play.length <- length(unique(play$frame.id))
+animate(animate.play(play), fps = 10, nframe = play.length)
+```
+
+# Real work
+Next Goal, understand play routes
+
+Data Frame Goal:
+- Contains all successful throwing plays with Gronk present on field
+```{r}
+# Gather game IDs of all Patriots games
+pat.game.ids <- games.sum[games.sum$homeTeamAbbr == "NE" | games.sum$visitorTeamAbbr == "NE",]$gameId
+
+# create patriot game gathering fn
+getPatGame <- function(game.id) {
+  url <- "https://raw.githubusercontent.com/nfl-football-ops/Big-Data-Bowl/master/Data/tracking_gameId_"
+  tail <- ".csv"
+  file.tracking <- paste0(url, game.id, tail)
+  game.inst <- read_csv(file.tracking)
+  game.inst.merged <- game.inst %>% inner_join(games.sum) %>% inner_join(plays.sum) 
+  return(game.inst.merged)
+}
+```
+Practice on first instance
+```{r}
+pg1 <- getPatGame(pat.game.ids[1])
+head(pg1)
+```
+
+Now breakup dataframe to include only plays with gronk on field
+```{r}
+gr.play.ids <- pg1[pg1$displayName == "Rob Gronkowski",]$playId
+gr.plays1 <- pg1[pg1$playId %in% unique(gr.play.ids),]
+head(gr.plays1)
+```
+
+```{r}
+simPlay(gr.plays1, 629)
+```
+
+
+
+```{r}
+# create subframe of just passes
+pplay.ids <- gr.plays1[grepl("pass",gr.plays1$playDescription),]$playId
+suc.pplay.ids <- gr.plays1[grepl("pass",gr.plays1$playDescription) & 
+                             !grepl("incomplete",gr.plays1$playDescription),]$playId
+gr.pplays1 <- gr.plays1[gr.plays1$playId %in% unique(pplay.ids),]
+gr.spplays1 <- gr.plays1[gr.plays1$playId %in% unique(suc.pplay.ids),]
+```
+
+Look at successful passes
+```{r}
+unique(gr.spplays1$playId)
+```
+
+```{r}
+simPlay(gr.spplays1,3846)
+```
+
+Notes:
+playId == 449 : Gronk brought help (56,38) away from intended receiver
+playId == 629 : Gronk brought main defender (49) and help (56,29) away from intended receiver
+playId == 1049 : Gronk included in sweep to move group of defenders off
+playId == 3528 : Gronk helps by pulling defenders off for targeted receiver to score
+playId == 3776 : Gronk moves back behind line of scrimmage to lead defenders in to distract
+- We need to tag these plays as successful receiver route!
+HOW
+
+
+```{r}
+file.players <- "https://raw.githubusercontent.com/nfl-football-ops/Big-Data-Bowl/master/Data/players.csv"
+players.sum <- read_csv(file.players) 
+players.sum <- players.sum[,c(1,4)]
+```
+Now add position
+```{r}
+# hard code
+gr.spplays1$Position <- NA
+for (nfl.id in gr.spplays1$nflId) {
+  gr.spplays1[!is.na(gr.spplays1$nflId) & gr.spplays1$nflId == nfl.id,]$Position <- 
+    players.sum[players.sum$nflId == nfl.id,]$PositionAbbr
+}
+```
+
+## Analyzing movement
+
+Use direction. Use t - (t-1) for x and y to determine for/back/in/out. 
+
+ x120
+y53.3  y0
+______
+|    |
+|    |
+|    |
+|    |
+______
+  x0
+
+Team Direction: DOWN|UP (My perspective)
+xt - xt_1 > 0 : Forward|Backward
+yt - yt_1 > 0 : Right/Left | Left/Right
+Dir:
+Split into 8 segments:
+330-30: W, 30-60: NW, 60-120: N,
+120-150: NE, 150-210: E, 210-240: SE,
+240-300: S, 300-330: SW
+
+```{r}
+giveDir <- function(dir) {
+  ifelse (dir > 330 | dir < 30, "W",
+          ifelse(dir >= 30 & dir < 60, "NW",
+          ifelse(dir >= 60 & dir < 120, "N",
+          ifelse(dir >= 120 & dir < 150, "NE",
+          ifelse(dir >= 150 & dir < 210, "E",
+          ifelse(dir >= 210 & dir < 240, "SE",
+          ifelse(dir >= 240 & dir < 300, "S", "SW")))))))
+}
+```
+Create new column
+```{r}
+gr.spplays1$dirFac <- lapply(gr.spplays1$dir, giveDir)
+```
+
+Next, define team direction.
+If home team has higher x than away, then they are heading south.
+Else north. Since this data frame is only NE on offense.
+
+```{r}
+# set offensive direction
+# first set all to NA
+gr.spplays1$OffDir <- NA
+for (play.id in unique(gr.spplays1$playId)) {
+  df <- gr.spplays1[gr.spplays1$playId==play.id,]
+  away.ind <- min(which(df$team == "away"))
+  home.ind <- min(which(df$team == "home"))
+  # compare the x of both
+  gr.spplays1[gr.spplays1$playId==play.id,]$OffDir <- 
+    ifelse(df$x[away.ind] > df$x[home.ind], "North", "South")
+}
+```
+
+
+
+# Defining Routes
+Different receiver routes: Flat, Slant, Comeback, Curl, Out, In/Dig, Corner, Post, Fly
+
+Target the receivers and tightends.
+
+Only check for after the snap, and before the catch.
+If OffDir == South -> check for South. If y > 26.65 check East. If y < 26.65 check west.
+else -> Check for North if y > 26.65 check east. If y < 26.65 check west.
+
+
+```{r}
+InDigRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left
+    ifelse("S" %in% df$dirFac & "E"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="E")), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "W"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="W")), T, F),
+        F)
+    
+    # north left
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "E"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="E")),T,F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "W"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="W")),T,F),
+        F)
+  }
+}
+```
+
+```{r}
+OutRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left
+    ifelse("S" %in% df$dirFac & "W"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="W")), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "E"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="E")), T, F),
+        F)
+    
+    # north left
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "W"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="W")),T,F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "E"  %in% df$dirFac,
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="E")),T,F),
+        F)
+  }
+}
+```
+
+Slant Route
+- must contain only N and NE, no E and so on...
+```{r}
+SlantRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left
+    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & !("E" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & !("W" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")), T, F),
+        F)
+    
+    # north left
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & !("E" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")),T,F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & !("W" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")),T,F),
+        F)
+  }
+}
+```
+
+Curl Route: Go N -> NE -> E -> SE? -> S?
+
+NOT WORKING 100% - too strict
+ex: play 94, player 14 ran a curl route
+```{r}
+CurlRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left - turning counterclockwise
+    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & "E" %in% df$dirFac & "NE" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")) &
+                  (min(which(df$dirFac=="SE")) < min(which(df$dirFac=="E"))) &
+                  (min(which(df$dirFac=="E")) < min(which(df$dirFac=="NE")))), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & "W" %in% df$dirFac & "NW" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")) &
+                  (min(which(df$dirFac=="SW")) < min(which(df$dirFac=="W"))) &
+                  (min(which(df$dirFac=="W")) < min(which(df$dirFac=="NW")))), T, F),
+        F)
+    
+    # north left - turn clock wise
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & "E" %in% df$dirFac & "SE" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")) &
+                  (min(which(df$dirFac=="NE")) < min(which(df$dirFac=="E"))) &
+                  (min(which(df$dirFac=="E")) < min(which(df$dirFac=="SE")))), T, F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & "W" %in% df$dirFac & "SW" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")) &
+                  (min(which(df$dirFac=="NW")) < min(which(df$dirFac=="W"))) &
+                  (min(which(df$dirFac=="W")) < min(which(df$dirFac=="SW")))), T, F),
+        F)
+  }
+}
+```
+
+Comeback route is curl but opposite way
+```{r}
+ComebackRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left - turning clockwise
+    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & "W" %in% df$dirFac & "NW" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")) &
+                  (min(which(df$dirFac=="SW")) < min(which(df$dirFac=="W"))) &
+                  (min(which(df$dirFac=="W")) < min(which(df$dirFac=="NW")))), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & "E" %in% df$dirFac & "NE" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")) &
+                  (min(which(df$dirFac=="SE")) < min(which(df$dirFac=="E"))) &
+                  (min(which(df$dirFac=="E")) < min(which(df$dirFac=="NE")))), T, F),
+        F)
+    
+    # north left - turn counter clockwise
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & "W" %in% df$dirFac & "SW" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")) &
+                  (min(which(df$dirFac=="NW")) < min(which(df$dirFac=="W"))) &
+                  (min(which(df$dirFac=="W")) < min(which(df$dirFac=="SW")))), T, F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & "E" %in% df$dirFac & "SE" %in% df$dirFac,
+        ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")) &
+                  (min(which(df$dirFac=="NE")) < min(which(df$dirFac=="E"))) &
+                  (min(which(df$dirFac=="E")) < min(which(df$dirFac=="SE")))), T, F),
+        F)
+  }
+}
+```
+
+
+
+
+```{r}
+routeHandler <- function(df) {
+  # make sure position is receiver
+  if (df$Position[1] %in% c("WR","TE")) {
+    # check which direction offense is heading
+    if (df$OffDir[1] == "South") {
+      # check left side of field
+      if (df$y[1] > 26.65) {
+        # determine route type
+        if (InDigRoute(df,"SL")) return("In/Dig")
+        if (OutRoute(df,"SL")) return("Out")
+        if (SlantRoute(df,"SL")) return("Slant")
+        if (CurlRoute(df,"SL")) return("Curl")
+        if (ComebackRoute(df,"SL")) return("Comeback")
+        
+      } else {
+        # player is on right side of field
+        if (InDigRoute(df,"SR")) return("In/Dig")
+        if (OutRoute(df,"SR")) return("Out")
+        if (SlantRoute(df,"SR")) return("Slant")
+        if (CurlRoute(df,"SR")) return("Curl")
+        if (ComebackRoute(df,"SR")) return("Comeback")
+        
+      }
+    } else {
+      # offense direction is north
+      # check on far left side of field
+      if (df$y[1] > 26.65) {
+        if (InDigRoute(df,"NL")) return("In/Dig")
+        if (OutRoute(df,"NL")) return("Out")
+        if (SlantRoute(df,"NL")) return("Slant")
+        if (CurlRoute(df,"NL")) return("Curl")
+        if (ComebackRoute(df,"NL")) return("Comeback")
+        
+      } else {
+        # right side
+        if (InDigRoute(df,"NR")) return("In/Dig")
+        if (OutRoute(df,"NR")) return("Out")
+        if (SlantRoute(df,"NR")) return("Slant")
+        if (CurlRoute(df,"NR")) return("Curl")
+        if (ComebackRoute(df,"NR")) return("Comeback")
+        
+      }
+    }
+  }
+  return(NA)
+}
+```
+
+
+```{r}
+# create new route type variable
+gr.spplays1$RouteType <- NA
+for (play.id in unique(gr.spplays1$playId)) {
+  pl.df <- gr.spplays1[gr.spplays1$playId==play.id,]
+  for (nfl.id in unique(pl.df$nflId)) {
+    if (is.na(nfl.id)) {
+      next
+    } else {
+      nfl.pl <- pl.df[pl.df$nflId==nfl.id,]
+      # get subset of dataframe between ball snap and when pass is arrived
+      ball.snap.ind <- which(nfl.pl$event=="ball_snap")
+      pass.arr.ind <- which(nfl.pl$event=="pass_arrived")
+      if (length(pass.arr.ind) != 0) {
+        nfl.pl <- nfl.pl[ball.snap.ind:pass.arr.ind,]
+      }
+      # now assign route type based on position
+      gr.spplays1[!is.na(gr.spplays1$nflId) & gr.spplays1$playId==play.id & gr.spplays1$nflId==nfl.id,]$RouteType <-
+        routeHandler(nfl.pl)
+    }
+  }
+}
+```
+
+
+Ensure they
+Direction: 0-360. Goes clockwise starting from negative side of x axis.
+
+X and y are swapping. So a player running along a yard line (left/right) is changing only y. 
+
+For a forward slant route:
+- Player's Position must be receiver
+  - Bring in player data match by nflId, grab position
+  
+- Player's x coord must positively increase
+- Player's dir should change from either 90/270 to ~120-150/300-330 respectively
