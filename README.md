@@ -14,8 +14,24 @@
 mkdir data_bowl
 cd data_bowl
 git init
-git remote add <url>
+git remote add origin <url>
 git pull origin master
 ```
 
+### Adding your edits
+```
+git pull
+git add -A
+git status
+git commit -m '<message>'
+git push
+```
+** if it is your first time pushing to github.com, please use
+```
+git push -u origin master
+```
 
+### Example
+```
+echo 'hello konner, hello github' > hello.<name>.txt
+```
