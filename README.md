@@ -31,3 +31,7 @@ git push
 git push -u origin master
 ```
 
+### Example
+```
+echo 'hello konner, hello github' > hello.<name>.txt
+```
