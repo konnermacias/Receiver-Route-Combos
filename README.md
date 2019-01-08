@@ -8,3 +8,14 @@
 - [ ] Finish defining 9 core receiver routes
 - [ ] Gather gen stats on common combos, successful plays
 - [ ] Potentially work to add in defensive schemes, and timing in-game.
+
+### Add Remote Repo to your computer
+```
+mkdir data_bowl
+cd data_bowl
+git init
+git remote add <url>
+git pull origin master
+```
+
+
