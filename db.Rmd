@@ -89,11 +89,6 @@ animate.play <- function(play) {
 
 Now animate
 ```{r}
-play.length.ex <- length(unique(example.play$frame.id))
-animate(animate.play(example.play), fps = 10, nframe = play.length.ex)
-```
-
-```{r}
 simPlay <- function(df, play.id) {
   play <- df %>% filter(playId == play.id)
   play.length <- length(unique(play$frame.id))
@@ -101,22 +96,6 @@ simPlay <- function(df, play.id) {
 }
 ```
 
-
-
-```{r}
-touchdown.plays <- tracking.example.merged %>% filter(grepl("TOUCHDOWN",playDescription))
-touchdown.ids <- unique(touchdown.plays$playId)
-```
-
-
-
-
-
-```{r}
-play <- tracking.example.merged %>% filter(playId == touchdown.ids[5])
-play.length <- length(unique(play$frame.id))
-animate(animate.play(play), fps = 10, nframe = play.length)
-```
 
 # Real work
 Next Goal, understand play routes
@@ -151,7 +130,7 @@ head(gr.plays1)
 ```
 
 ```{r}
-simPlay(gr.plays1, 629)
+#simPlay(gr.plays1, 629)
 ```
 
 
@@ -167,11 +146,11 @@ gr.spplays1 <- gr.plays1[gr.plays1$playId %in% unique(suc.pplay.ids),]
 
 Look at successful passes
 ```{r}
-unique(gr.spplays1$playId)
+#unique(gr.spplays1$playId)
 ```
 
 ```{r}
-simPlay(gr.spplays1,3846)
+#simPlay(gr.spplays1,3846)
 ```
 
 Notes:
@@ -236,6 +215,7 @@ giveDir <- function(dir) {
 Create new column
 ```{r}
 gr.spplays1$dirFac <- lapply(gr.spplays1$dir, giveDir)
+gr.spplays1$dirFac <- as.factor(unlist(gr.spplays1$dirFac))
 ```
 
 Next, define team direction.
@@ -436,6 +416,58 @@ ComebackRoute <- function(df, locType) {
 }
 ```
 
+```{r}
+CornerRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left
+    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & !("W" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")), T, F),
+        F)
+    
+    # south right
+  } else if (locType == "SR") {
+    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & !("E" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")), T, F),
+        F)
+    
+    # north left
+  } else if (locType == "NL") {
+    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & !("W" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")),T,F),
+        F)
+    
+    # north right
+  } else if (locType == "NR") {
+    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & !("E" %in% df$dirFac),
+        ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")),T,F),
+        F)
+  }
+}
+```
+
+```{r}
+FlyRoute <- function(df, locType) {
+
+  if (df$PassLength[1] < 15) return (FALSE)
+  
+  if (locType == "SL" | locType == "SR") {
+    if ("S" %in% df$dirFac){
+      fr.df <- as.data.frame(prop.table(table(df$dirFac))['S'])
+      colnames(fr.df) <- "freq"
+      return (ifelse (fr.df$freq[1] > 0.92, T, F)) ##go bruins
+      } else {return (FALSE)}
+  }
+
+  if (locType == "NL" | locType == "NR") {
+    if ("N" %in% df$dirFac){
+      fr.df <- as.data.frame(prop.table(table(df$dirFac))['N'])
+      colnames(fr.df) <- "freq"
+      return (ifelse (fr.df$freq[1] > 0.92, T, F)) ##go bruins
+      } else {return (FALSE)}
+  }
+  
+}
+```
 
 
 
@@ -449,18 +481,32 @@ routeHandler <- function(df) {
       if (df$y[1] > 26.65) {
         # determine route type
         if (InDigRoute(df,"SL")) return("In/Dig")
-        if (OutRoute(df,"SL")) return("Out")
+        if (OutRoute(df,"SL")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+          }
+        if (SlantRoute(df,"SL")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "SL")) return ("Corner")
         if (SlantRoute(df,"SL")) return("Slant")
         if (CurlRoute(df,"SL")) return("Curl")
         if (ComebackRoute(df,"SL")) return("Comeback")
+        if (FlyRoute(df, "SL")) return("Fly")
+        
         
       } else {
         # player is on right side of field
         if (InDigRoute(df,"SR")) return("In/Dig")
-        if (OutRoute(df,"SR")) return("Out")
-        if (SlantRoute(df,"SR")) return("Slant")
+        if (OutRoute(df,"SR")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+          }
+        if (SlantRoute(df,"SR")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "SR")) return ("Corner")
         if (CurlRoute(df,"SR")) return("Curl")
         if (ComebackRoute(df,"SR")) return("Comeback")
+        if (FlyRoute(df, "SR")) return("Fly")
         
       }
     } else {
@@ -468,21 +514,33 @@ routeHandler <- function(df) {
       # check on far left side of field
       if (df$y[1] > 26.65) {
         if (InDigRoute(df,"NL")) return("In/Dig")
-        if (OutRoute(df,"NL")) return("Out")
-        if (SlantRoute(df,"NL")) return("Slant")
+        if (OutRoute(df,"NL")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+          }
+        if (SlantRoute(df,"NL")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "NL")) return ("Corner")
         if (CurlRoute(df,"NL")) return("Curl")
         if (ComebackRoute(df,"NL")) return("Comeback")
         
       } else {
         # right side
         if (InDigRoute(df,"NR")) return("In/Dig")
-        if (OutRoute(df,"NR")) return("Out")
-        if (SlantRoute(df,"NR")) return("Slant")
+        if (OutRoute(df,"NR")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+          }
+        if (SlantRoute(df,"NR")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "NR")) return ("Corner")
         if (CurlRoute(df,"NR")) return("Curl")
         if (ComebackRoute(df,"NR")) return("Comeback")
+        if (FlyRoute(df, "NR")) return("Fly")
         
       }
     }
+    return("idk")
   }
   return(NA)
 }
@@ -512,6 +570,14 @@ for (play.id in unique(gr.spplays1$playId)) {
   }
 }
 ```
+
+
+```{r}
+View(gr.spplays1)
+```
+
+
+
 
 
 Ensure they
