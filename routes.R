@@ -11,27 +11,35 @@
 InDigRoute <- function(df, locType) {
   if (locType == "SL") {
     # south left
-    ifelse("S" %in% df$dirFac & "E"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="E")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("E" %in% plDirs & min(which(plDirs=="S")) < min(which(plDirs == "E")),T,F)
+    } else { F }
     
     # south right
   } else if (locType == "SR") {
-    ifelse("S" %in% df$dirFac & "W"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="W")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("W" %in% plDirs & min(which(plDirs=="S")) < min(which(plDirs == "W")),T,F)
+    } else { F }
     
     # north left
   } else if (locType == "NL") {
-    ifelse("N" %in% df$dirFac & "E"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="E")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("E" %in% plDirs & min(which(plDirs=="N")) < min(which(plDirs == "E")),T,F)
+    } else { F }
     
     # north right
   } else if (locType == "NR") {
-    ifelse("N" %in% df$dirFac & "W"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="W")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("W" %in% plDirs & min(which(plDirs=="N")) < min(which(plDirs == "W")),T,F)
+    } else { F }
   }
 }
 
@@ -40,27 +48,35 @@ InDigRoute <- function(df, locType) {
 OutRoute <- function(df, locType) {
   if (locType == "SL") {
     # south left
-    ifelse("S" %in% df$dirFac & "W"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="W")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("W" %in% plDirs & min(which(plDirs=="S")) < min(which(plDirs == "W")),T,F)
+    } else { F }
     
     # south right
   } else if (locType == "SR") {
-    ifelse("S" %in% df$dirFac & "E"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="E")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("E" %in% plDirs & min(which(plDirs=="S")) < min(which(plDirs == "E")),T,F)
+    } else { F }
     
     # north left
   } else if (locType == "NL") {
-    ifelse("N" %in% df$dirFac & "W"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="W")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("W" %in% plDirs & min(which(plDirs=="N")) < min(which(plDirs == "W")),T,F)
+    } else { F }
     
     # north right
   } else if (locType == "NR") {
-    ifelse("N" %in% df$dirFac & "E"  %in% df$dirFac,
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="E")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("E" %in% plDirs & min(which(plDirs=="N")) < min(which(plDirs == "E")),T,F)
+    } else { F }
   }
 }
 
@@ -69,103 +85,192 @@ OutRoute <- function(df, locType) {
 SlantRoute <- function(df, locType) {
   if (locType == "SL") {
     # south left
-    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & !("E" %in% df$dirFac),
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SE" %in% plDirs & !("E" %in% plDirs) & min(which(plDirs=="S")) < min(which(plDirs == "SE")),T,F)
+    } else { F }
     
     # south right
   } else if (locType == "SR") {
-    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & !("W" %in% df$dirFac),
-           ifelse(min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SW" %in% plDirs & !("W" %in% plDirs) & min(which(plDirs=="S")) < min(which(plDirs == "SW")),T,F)
+    } else { F }
     
     # north left
   } else if (locType == "NL") {
-    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & !("E" %in% df$dirFac),
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NE" %in% plDirs & !("E" %in% plDirs) & min(which(plDirs=="N")) < min(which(plDirs == "NE")),T,F)
+    } else { F }
     
     # north right
   } else if (locType == "NR") {
-    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & !("W" %in% df$dirFac),
-           ifelse(min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")),T,F),
-           F)
+    if ("N" %in% df$dirFac) {
+      # looks at all directions after the first direction we were searching for
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NW" %in% plDirs & !("W" %in% plDirs) & min(which(plDirs=="N")) < min(which(plDirs == "NW")),T,F)
+    } else { F }
   }
 }
+
 
 #
 ## Curl Route
 CurlRoute <- function(df, locType) {
   if (locType == "SL") {
     # south left - turning counterclockwise
-    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & "E" %in% df$dirFac & "NE" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")) &
-                     (min(which(df$dirFac=="SE")) < min(which(df$dirFac=="E"))) &
-                     (min(which(df$dirFac=="E")) < min(which(df$dirFac=="NE")))), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SE" %in% plDirs & "E" %in% plDirs & "NE" %in% plDirs &
+               min(which(plDirs=="S")) < min(which(plDirs=="SE")) &
+               min(which(plDirs=="SE")) < min(which(plDirs=="E")) &
+               min(which(plDirs=="E")) < min(which(plDirs=="NE")), T, F)
+    } else { F }
     
     # south right
   } else if (locType == "SR") {
-    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & "W" %in% df$dirFac & "NW" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")) &
-                     (min(which(df$dirFac=="SW")) < min(which(df$dirFac=="W"))) &
-                     (min(which(df$dirFac=="W")) < min(which(df$dirFac=="NW")))), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SW" %in% plDirs & "W" %in% plDirs & "NW" %in% plDirs &
+               min(which(plDirs=="S")) < min(which(plDirs=="SW")) &
+               min(which(plDirs=="SW")) < min(which(plDirs=="W")) &
+               min(which(plDirs=="W")) < min(which(plDirs=="NW")), T, F)
+    } else { F }
     
     # north left - turn clock wise
   } else if (locType == "NL") {
-    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & "E" %in% df$dirFac & "SE" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")) &
-                     (min(which(df$dirFac=="NE")) < min(which(df$dirFac=="E"))) &
-                     (min(which(df$dirFac=="E")) < min(which(df$dirFac=="SE")))), T, F),
-           F)
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NE" %in% plDirs & "E" %in% plDirs & "SE" %in% plDirs &
+               min(which(plDirs=="N")) < min(which(plDirs=="NE")) &
+               min(which(plDirs=="NE")) < min(which(plDirs=="E")) &
+               min(which(plDirs=="E")) < min(which(plDirs=="SE")), T, F)
+    } else { F }
     
     # north right
   } else if (locType == "NR") {
-    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & "W" %in% df$dirFac & "SW" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")) &
-                     (min(which(df$dirFac=="NW")) < min(which(df$dirFac=="W"))) &
-                     (min(which(df$dirFac=="W")) < min(which(df$dirFac=="SW")))), T, F),
-           F)
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NW" %in% plDirs & "W" %in% plDirs & "SW" %in% plDirs &
+               min(which(plDirs=="N")) < min(which(plDirs=="NW")) &
+               min(which(plDirs=="NW")) < min(which(plDirs=="W")) &
+               min(which(plDirs=="W")) < min(which(plDirs=="SW")), T, F)
+    } else { F }
   }
 }
+
 
 #
 ## Comeback route
 ComebackRoute <- function(df, locType) {
   if (locType == "SL") {
     # south left - turning clockwise
-    ifelse("S" %in% df$dirFac & "SW" %in% df$dirFac & "W" %in% df$dirFac & "NW" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SW")) &
-                     (min(which(df$dirFac=="SW")) < min(which(df$dirFac=="W"))) &
-                     (min(which(df$dirFac=="W")) < min(which(df$dirFac=="NW")))), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SW" %in% plDirs & "W" %in% plDirs & "NW" %in% plDirs &
+               min(which(plDirs=="S")) < min(which(plDirs=="SW")) &
+               min(which(plDirs=="SW")) < min(which(plDirs=="W")) &
+               min(which(plDirs=="W")) < min(which(plDirs=="NW")), T, F)
+    } else { F }
     
     # south right
   } else if (locType == "SR") {
-    ifelse("S" %in% df$dirFac & "SE" %in% df$dirFac & "E" %in% df$dirFac & "NE" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="S")) < min(which(df$dirFac=="SE")) &
-                     (min(which(df$dirFac=="SE")) < min(which(df$dirFac=="E"))) &
-                     (min(which(df$dirFac=="E")) < min(which(df$dirFac=="NE")))), T, F),
-           F)
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SE" %in% plDirs & "E" %in% plDirs & "NE" %in% plDirs &
+               min(which(plDirs=="S")) < min(which(plDirs=="SE")) &
+               min(which(plDirs=="SE")) < min(which(plDirs=="E")) &
+               min(which(plDirs=="E")) < min(which(plDirs=="NE")), T, F)
+    } else { F }
     
     # north left - turn counter clockwise
   } else if (locType == "NL") {
-    ifelse("N" %in% df$dirFac & "NW" %in% df$dirFac & "W" %in% df$dirFac & "SW" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NW")) &
-                     (min(which(df$dirFac=="NW")) < min(which(df$dirFac=="W"))) &
-                     (min(which(df$dirFac=="W")) < min(which(df$dirFac=="SW")))), T, F),
-           F)
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NW" %in% plDirs & "W" %in% plDirs & "SW" %in% plDirs &
+               min(which(plDirs=="N")) < min(which(plDirs=="NW")) &
+               min(which(plDirs=="NW")) < min(which(plDirs=="W")) &
+               min(which(plDirs=="W")) < min(which(plDirs=="SW")), T, F)
+    } else { F }
     
     # north right
   } else if (locType == "NR") {
-    ifelse("N" %in% df$dirFac & "NE" %in% df$dirFac & "E" %in% df$dirFac & "SE" %in% df$dirFac,
-           ifelse((min(which(df$dirFac=="N")) < min(which(df$dirFac=="NE")) &
-                     (min(which(df$dirFac=="NE")) < min(which(df$dirFac=="E"))) &
-                     (min(which(df$dirFac=="E")) < min(which(df$dirFac=="SE")))), T, F),
-           F)
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NE" %in% plDirs & "E" %in% plDirs & "SE" %in% plDirs &
+               min(which(plDirs=="N")) < min(which(plDirs=="NE")) &
+               min(which(plDirs=="NE")) < min(which(plDirs=="E")) &
+               min(which(plDirs=="E")) < min(which(plDirs=="SE")), T, F)
+    } else { F }
   }
 }
+
+#
+## Corner route
+CornerRoute <- function(df, locType) {
+  if (locType == "SL") {
+    # south left
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SW" %in% plDirs & !("W" %in% plDirs) &
+          min(which(plDirs=="S")) < min(which(plDirs=="SW")), T, F)
+    } else { F }
+    
+    # south right
+  } else if (locType == "SR") {
+    if ("S" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="S")):length(df$dirFac)]
+      ifelse("SE" %in% plDirs & !("E" %in% plDirs) &
+               min(which(plDirs=="S")) < min(which(plDirs=="SE")), T, F)
+    } else { F }
+    
+    # north left
+  } else if (locType == "NL") {
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NW" %in% plDirs & !("W" %in% plDirs) &
+               min(which(plDirs=="N")) < min(which(plDirs=="NW")), T, F)
+    } else { F }
+    
+    # north right
+  } else if (locType == "NR") {
+    if ("N" %in% df$dirFac) {
+      plDirs <- df$dirFac[min(which(df$dirFac=="N")):length(df$dirFac)]
+      ifelse("NE" %in% plDirs & !("E" %in% plDirs) &
+               min(which(plDirs=="N")) < min(which(plDirs=="NE")), T, F)
+    } else { F }
+  }
+}
+
+#
+## Fly Route
+FlyRoute <- function(df, locType) {
+  
+  if (df$PassLength[1] < 15) return (FALSE)
+  
+  if (locType == "SL" | locType == "SR") {
+    if ("S" %in% df$dirFac){
+      fr.df <- as.data.frame(prop.table(table(df$dirFac))['S'])
+      colnames(fr.df) <- "freq"
+      return (ifelse (fr.df$freq[1] > 0.92, T, F)) ##go bruins
+    } else {return (FALSE)}
+  }
+  
+  if (locType == "NL" | locType == "NR") {
+    if ("N" %in% df$dirFac){
+      fr.df <- as.data.frame(prop.table(table(df$dirFac))['N'])
+      colnames(fr.df) <- "freq"
+      return (ifelse (fr.df$freq[1] > 0.92, T, F)) ##go bruins
+    } else {return (FALSE)}
+  }
+  
+}
+
+
 
 #
 ## Route Handler Fn
@@ -178,18 +283,32 @@ routeHandler <- function(df) {
       if (df$y[1] > 26.65) {
         # determine route type
         if (InDigRoute(df,"SL")) return("In/Dig")
-        if (OutRoute(df,"SL")) return("Out")
+        if (OutRoute(df,"SL")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+        }
+        if (SlantRoute(df,"SL")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "SL")) return ("Corner")
         if (SlantRoute(df,"SL")) return("Slant")
         if (CurlRoute(df,"SL")) return("Curl")
         if (ComebackRoute(df,"SL")) return("Comeback")
+        if (FlyRoute(df, "SL")) return("Fly")
+        
         
       } else {
         # player is on right side of field
         if (InDigRoute(df,"SR")) return("In/Dig")
-        if (OutRoute(df,"SR")) return("Out")
-        if (SlantRoute(df,"SR")) return("Slant")
+        if (OutRoute(df,"SR")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+        }
+        if (SlantRoute(df,"SR")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "SR")) return ("Corner")
         if (CurlRoute(df,"SR")) return("Curl")
         if (ComebackRoute(df,"SR")) return("Comeback")
+        if (FlyRoute(df, "SR")) return("Fly")
         
       }
     } else {
@@ -197,22 +316,33 @@ routeHandler <- function(df) {
       # check on far left side of field
       if (df$y[1] > 26.65) {
         if (InDigRoute(df,"NL")) return("In/Dig")
-        if (OutRoute(df,"NL")) return("Out")
-        if (SlantRoute(df,"NL")) return("Slant")
+        if (OutRoute(df,"NL")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+        }
+        if (SlantRoute(df,"NL")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "NL")) return ("Corner")
         if (CurlRoute(df,"NL")) return("Curl")
         if (ComebackRoute(df,"NL")) return("Comeback")
         
       } else {
         # right side
         if (InDigRoute(df,"NR")) return("In/Dig")
-        if (OutRoute(df,"NR")) return("Out")
-        if (SlantRoute(df,"NR")) return("Slant")
+        if (OutRoute(df,"NR")) {
+          if (df$PassLength[1] > 8) {return("Out")} else {return ("Flat")} ##8 clap go bruins
+        }
+        if (SlantRoute(df,"NR")) {
+          if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
+        }
+        if (df$PassLength[1] > 15 & CornerRoute(df, "NR")) return ("Corner")
         if (CurlRoute(df,"NR")) return("Curl")
         if (ComebackRoute(df,"NR")) return("Comeback")
+        if (FlyRoute(df, "NR")) return("Fly")
         
       }
     }
+    return("idk")
   }
   return(NA)
 }
-
