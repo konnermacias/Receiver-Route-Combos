@@ -112,22 +112,27 @@ for (play.id in unique(g.df$playId)) {
 # at end, then build string to give as column name
 g.df$routeCombo <- NA
 for (play.id in unique(g.df$playId)) {
-  pl.df <- g.df[g.df$playId == play.id,]
+  pl.df <- filter(g.df, playId == play.id)
   # get shortened df of only offensive team players
-  if (pl.df$possesionTeam[1] == pl.df$homeTeamAbbr) {
-    pl.df <- filter(kon, team == "home")
+  if (pl.df$possessionTeam[1] == pl.df$homeTeamAbbr[1]) {
+    pl.df <- filter(pl.df, team == "home")
   } else {
-    pl.df <- filter(kon, team == "away")
+    pl.df <- filter(pl.df, team == "away")
   }
   # gather counts of factors
-  routeTable <- as.data.frame(table(pl.df$Position)) # change to route type
-  routeTable$Freq <- routeTable$Freq / nrow(filter(pl.df, Position=="QB")) # adjust
+  
+  routeTable <- as.data.frame(table(pl.df$RouteType)) # change to route type
+  if (nrow(routeTable) == 0) {
+    print(pl.df)
+    next
+  }
+  routeTable$Freq <- routeTable$Freq / nrow(filter(pl.df, nflId == pl.df$nflId[1]))
   
   # now build string
   comboStr = ""
   for (row in 1:nrow(routeTable)) {
-    if(!is.na(routeTable[row,]$Var1)) {
-      comboStr <- paste0(comboStr, routeTable[row,]$Freq, " ", routeTable[row,]$Var1, ", ")
+    if(!is.na(routeTable$Var1[row])) {
+      comboStr <- paste0(comboStr, routeTable$Freq[row], " ", routeTable$Var1[row], ", ")
     }
   }
   comboStr <- substr(comboStr, 1, length(comboStr)-2)
