@@ -35,11 +35,7 @@ g.df <- g.df[g.df$playId %in% unique(pplay.ids),]
 # Now add additional columns to dataframe
 
 # add position - slow, draws an error message but works?
-g.df$Position <- NA
-for (nfl.id in unique(g.df$nflId)) {
-  g.df[!is.na(g.df$nflId) & g.df$nflId == nfl.id,]$Position <- 
-    players.sum[players.sum$nflId == nfl.id,]$PositionAbbr
-}
+g.df <- merge(g.df, players.sum, by="nflId", all.x = TRUE)
 
 # define directions
 giveDir <- function(dir) {
@@ -99,6 +95,7 @@ for (play.id in unique(g.df$playId)) {
     }
   }
 }
+## takes < 2min to get to this point
 
 # create a routes combo column, looks like:
 # 1 slant, 2 curl, 2 NA
@@ -118,12 +115,15 @@ for (play.id in unique(g.df$playId)) {
     pl.df <- filter(pl.df, team == "home")
   } else {
     pl.df <- filter(pl.df, team == "away")
+    print(nrow(pl.df))
   }
   # gather counts of factors
-  
+  print(pl.df$possessionTeam[1])
   routeTable <- as.data.frame(table(pl.df$RouteType)) # change to route type
+  print(routeTable)
   if (nrow(routeTable) == 0) {
-    print(pl.df)
+    #print(pl.df$RouteType)
+    #print(routeTable)
     next
   }
   routeTable$Freq <- routeTable$Freq / nrow(filter(pl.df, nflId == pl.df$nflId[1]))
@@ -131,11 +131,15 @@ for (play.id in unique(g.df$playId)) {
   # now build string
   comboStr = ""
   for (row in 1:nrow(routeTable)) {
+    print(routeTable)
+    print(routeTable$Freq[row])
+    print(routeTable$Var1[row])
     if(!is.na(routeTable$Var1[row])) {
-      comboStr <- paste0(comboStr, routeTable$Freq[row], " ", routeTable$Var1[row], ", ")
+      comboStr <- paste0(comboStr, routeTable$Freq[row], " ", routeTable$Var1[row], ",")
+      print(comboStr)
     }
   }
-  comboStr <- substr(comboStr, 1, length(comboStr)-2)
+  comboStr <- substr(comboStr, 1, nchar(comboStr)-1)
   g.df[g.df$playId==play.id,]$routeCombo <- comboStr
 }
 
@@ -143,7 +147,7 @@ for (play.id in unique(g.df$playId)) {
 g.df$hash <- NA
 for (play.id in unique(g.df$playId)) {
   pl.df <- filter(g.df, playId == play.id)
-  g.df[g.df==play.id,] <- paste0(unique(pl.df$gameId), "-", play.id)
+  g.df[g.df$playId==play.id,]$hash <- paste0(unique(pl.df$gameId), "-", play.id)
 }
 
 # from here dataframe will be set
@@ -154,4 +158,26 @@ for (play.id in unique(g.df$playId)) {
 # hash
 
 
+### Colnames to keep
+#
+# time[1],	homeTeamAbbr/homeDisplayName, season, week, gameDate
+# visitorScoreBefore play etc.
+# quarter, GameClock, down, yardstoGo, possesionTeam, yardlineSide, ... through play
+# routeCombo, OffDir, hash
+#
+# EXTRA
+# event - add info, offensive qtr, offensive WR
+
+datalist <- list()
+
+i <- 1
+
+for (hash.x in unique(g.df$hash)) {
+  df <- filter(g.df, hash == hash.x)
+  df <- df[1,]
+  datalist[[i]] <- df
+  i <- i +1
+}
+
+final <- bind_rows(datalist)
 
