@@ -7,6 +7,16 @@
 #
 
 #
+## Old test:
+### Corner       Flat        Fly        idk     In/Dig        Out       Post      Slant 
+# 0.01550354 0.11608439 0.01951824 0.25066200 0.45664987 0.06205689 0.04843256 0.03109251 
+#
+# Without TE:
+### Corner       Flat        Fly        idk     In/Dig        Out       Post      Slant 
+# 0.01720470 0.11242492 0.01701702 0.24537037 0.46778028 0.06212462 0.05005005 0.02802803 
+#
+# surprisingly not that much better
+
 ## In/Dig Route
 InDigRoute <- function(df, locType) {
   if (locType == "SL") {
@@ -276,6 +286,7 @@ FlyRoute <- function(df, locType) {
 ## Route Handler Fn
 routeHandler <- function(df) {
   # make sure position is receiver
+  # remove TE for experimentation
   if (df$Position[1] %in% c("WR","TE")) {
     # check which direction offense is heading
     if (df$OffDir[1] == "South") {
