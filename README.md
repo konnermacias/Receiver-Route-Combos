@@ -1,13 +1,10 @@
 # Identifying Best Receiver-Route Combinations
 
 ### Important Files
-- db.Rmd: 1st markdown file working to define different receiver routes, and simulate NFL plays
-- routes.R: contains all route definition fns which we will later import
-
-### Todo
-- [ ] Finish defining 9 core receiver routes
-- [ ] Gather gen stats on common combos, successful plays
-- [ ] Potentially work to add in defensive schemes, and timing in-game.
+- routes.R : function definitions of our routes and routehandler functions
+- gatherDF.R : used to create final data frame for analysis.
+- Shiny_App/ : folder for our soon to be Shiny app
+- Shiny/Shiny_App/ : old copied shiny app from one I had done previously
 
 ### Add Remote Repo to your computer
 ```
