@@ -1,36 +1,9 @@
 library(plotly)
-library(plyr)
 source("helpers.R")
 
 shinyServer(
   function(input, output){
-    
-    df <- read.csv("pre_vs_reg.csv", stringsAsFactors = T)
-    
-    route_count <- c(0,0,0,0,0,0,0,0)
-    names(route_count) <- c("In/Dig","Flat","Slant","Corner","Curl","Comeback","Fly","idk")
-    
-    for (hash in df$hash) {
-      s <- strsplit(as.character(hash), ",")
-      
-      # for each item in list
-      for (i in length(s[[1]])) {
-        # split up into 2 and Fly for example
-        ss <- strsplit(s[[1]][i], " ")
-        # index into Fly Count and increment
-        # add the first item (number) to count of route type
-        route_count[ss[2]] = route_count[ss[2]] + route_count[ss[1]] 
-      }
-    }
-    
-    
-    
     output$plot <- renderPlotly({
-      
-      p <- ggplot(dataset(), aes_string(x=unique(input$RouteType), y=input$y)) + geom_point()
-      
-      
-      
       args <- switch(input$var,
                      "Win %" = list(df$RegSeasonPCT, df$PreSeasonPCT, "Win %"),
                      "Total Offense (YPG)" = list(df$RegTO, df$PreTO, "Total Offense (YPG)"),

@@ -26,7 +26,8 @@ getGame <- function(game.id) {
   return(game.inst.merged)
 }
 
-g.df <- getGame(2017090700)
+#g.df <- getGame(2017090700)
+g.df <- getGame(2017091004)
 
 # create subset of dataframe with only passes
 pplay.ids <- g.df[grepl("pass", g.df$playDescription),]$playId

@@ -301,7 +301,7 @@ routeHandler <- function(df) {
           if (df$PassLength[1] > 15) {return("Post")} else {return ("Slant")}
         }
         if (df$PassLength[1] > 15 & CornerRoute(df, "SL")) return ("Corner")
-        if (SlantRoute(df,"SL")) return("Slant")
+        #if (SlantRoute(df,"SL")) return("Slant")
         if (CurlRoute(df,"SL")) return("Curl")
         if (ComebackRoute(df,"SL")) return("Comeback")
         if (FlyRoute(df, "SL")) return("Fly")
